@@ -10,6 +10,8 @@ use App\Http\Requests\UserUpdateRequest;
 use App\Models\User;
 use App\Http\Resources\UserResource;
 use GuzzleHttp\Client;
+use File;
+use ZipArchive;
 
 class MainController extends Controller
 {
@@ -22,21 +24,62 @@ class MainController extends Controller
     public function getResources(Request $request)
     {
         try{
-            $url = $this->buildUrl($request->all());
+            $parameters = $request->all();
+            $download = $request->input('download');
+            unset($parameters['download']);
+
+            $url = $this->buildUrl($parameters);
 
             $client = new Client();
             $response = $client->get($url);
             $response = $response->getBody();
 
-            return response()->json([
-                'data' => json_decode($response),
-                'message' => 'This is a default endpoint',
-            ], 200);
+            if($download == 1){
+                return $this->getDownloadContent($response);
+            }else{
+                return response()->json([
+                    'data' => json_decode($response),
+                    'message' => 'This is a default endpoint',
+                ], 200);
+            }
         }catch(\Exception $e){
             return response()->json([
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    private function getDownloadContent($response){
+        $file = time() . '_file.json';
+                $destinationPath = public_path()."/upload/json/";
+
+                if(!is_dir($destinationPath)){
+                    mkdir($destinationPath, 0777, true);
+                }
+
+                File::put($destinationPath . $file, $response);
+
+                $zip = new ZipArchive;
+                $zipName = 'result.zip';
+                if(file_exists(public_path($zipName))){
+                    unlink(public_path($zipName));
+                }
+
+                if ($zip->open(public_path($zipName), ZipArchive::CREATE) === TRUE){
+                    $files = File::files(public_path()."/upload/json/");
+
+                    foreach ($files as $key => $val) {
+                        $relativeNameInZipFile = basename($val);
+                        $zip->addFile($val, $relativeNameInZipFile);
+                    }
+
+                    $zip->close();
+                }
+
+                $response = response()->download(public_path($zipName));
+                File::delete($destinationPath . $file);
+
+                return $response;
     }
 
     private function buildUrl($parameters){
