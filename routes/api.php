@@ -21,7 +21,7 @@ header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS, HEAD');
 Route::group([
     'prefix' => 'api-consume'
 ], function ($router) {
-    Route::get('testRoute/', [MainController::class, 'getCharacters']);
+    Route::get('getResources', [MainController::class, 'getResources']);
 });
 
 /** **/
