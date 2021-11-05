@@ -9,6 +9,7 @@ use App\Http\Requests\UserCreateRequest;
 use App\Http\Requests\UserUpdateRequest;
 use App\Models\User;
 use App\Http\Resources\UserResource;
+use GuzzleHttp\Client;
 
 class MainController extends Controller
 {
@@ -17,16 +18,24 @@ class MainController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function testRoute()
+
+    public function getCharacters()
     {
         try{
+            $baseUrl = env('API_ENDPOINT');
+            $url = $baseUrl . '/character';
+
+            $client = new Client();
+            $request = $client->get($url);
+            $response = $request->getBody();
+
             return response()->json([
-                'data' => ["Test", "the", "endpoint"],
-                'message' => 'This is a default endpoint'
+                'data' => json_decode($response),
+                'message' => 'This is a default endpoint',
             ], 200);
         }catch(\Exception $e){
             return response()->json([
-                'message' => 'Internal server error'
+                'message' => $e->getMessage()
             ], 500);
         }
     }
