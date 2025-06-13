@@ -25,3 +25,6 @@ Route::group([
 });
 
 /** **/
+use App\Http\Controllers\API\GameController;
+
+Route::post('game/{game}/reset', [GameController::class, 'reset']);
